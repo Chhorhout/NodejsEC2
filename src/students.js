@@ -88,20 +88,29 @@ router.post('/login', async (req, res) => {
 // Search for students
 router.get('/search', async (req, res) => {
     try {
+        // Extract the query parameter and validate it
         const { query: searchQuery } = req.query;
+
+        if (!searchQuery || typeof searchQuery !== 'string') {
+            return res.status(400).json({ message: 'Missing or invalid query parameter' });
+        }
+
+        // Reference to the Firestore collection
         const studentsRef = collection(db, 'students');
         const querySnapshot = await getDocs(studentsRef);
-        
+
+        // Process the documents
         const students = querySnapshot.docs
             .map(doc => ({
                 id: doc.id,
                 ...doc.data()
             }))
             .filter(student => 
-                student.sname.toLowerCase().includes(searchQuery.toLowerCase())
+                student.sname && student.sname.toLowerCase().includes(searchQuery.toLowerCase())
             )
             .map(({ id, sid, sname, semail }) => ({ id, sid, sname, semail }));
 
+        // Return the filtered results
         res.json(students);
     } catch (err) {
         console.error(err.message);
